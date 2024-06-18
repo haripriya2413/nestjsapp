@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
@@ -20,12 +20,12 @@ jobs:
 
       - name: Copy files to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -r . ubuntu@52.91.215.1/home/ubuntu/hello-world-app
+          scp -o StrictHostKeyChecking=no -r . ubuntu@52.91.215.1/home/ubuntu/nestjsapp
 
       - name: Install dependencies and restart application
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@52.91.215.1 << 'EOF'
-          cd /home/ubuntu/hello-world-app
+          cd /home/ubuntu/nestjsapp
           npm install
-          pm2 restart hello-world-app || pm2 start dist/main.js --name "hello-world-app"
+          pm2 restart nestjsapp || pm2 start dist/main.js --name "nestjsapp"
           EOF
