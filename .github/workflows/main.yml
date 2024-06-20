@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy NestJS App to EC2
 
 on:
   push:
@@ -10,22 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout Code
+      uses: actions/checkout@v2
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
 
-      - name: Copy files to EC2
-        run: |
-          scp -o StrictHostKeyChecking=no -r . ubuntu@52.91.215.1/home/ubuntu/nestjsapp
+    - name: Install Dependencies
+      run: npm install
 
-      - name: Install dependencies and restart application
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@52.91.215.1 << 'EOF'
-          cd /home/ubuntu/nestjsapp
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ubuntu/Nestjs_Hello_world_app
           npm install
-          pm2 restart nestjsapp || pm2 start dist/main.js --name "nestjsapp"
-          EOF
+          npm start > /dev/null 2>&1 &
