@@ -28,6 +28,50 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /home/ubuntu/nestjsapp
-          npm install
-          npm start > /dev/null 2>&1 &
+            #!/bin/bash
+
+            # Define project directory
+            PROJECT_DIR="/home/ubuntu/nestjsapp"
+
+            # Remove the existing directory if it exists to avoid conflicts
+            if [ -d "$PROJECT_DIR" ]; then
+              rm -rf "$PROJECT_DIR"
+            fi
+
+            # Clone the repository
+            git clone https://github.com/nestjsapp/Task.git "$PROJECT_DIR"
+
+            # Navigate to project directory
+            cd "$PROJECT_DIR" || { echo "Directory $PROJECT_DIR does not exist."; exit 1; }
+
+            # Pull the latest changes from the master branch
+            git pull origin master
+
+            # Check if package.json exists
+            if [ -f "package.json" ]; then
+              # Install dependencies
+              npm install
+            else
+              echo "package.json not found in $PROJECT_DIR."
+              exit 1
+            fi
+
+            # Build the project
+            npm run build
+
+            # Check if pm2 is installed, if not install it
+            if ! command -v pm2 &> /dev/null; then
+              echo "pm2 could not be found, installing..."
+              npm install -g pm2
+              pm2 startup
+            fi
+
+            # Start or restart the application with PM2
+            if pm2 describe nest-hello-world > /dev/null; then
+              pm2 restart nest-hello-world
+            else
+              pm2 start dist/main.js --name nest-hello-world
+            fi
+
+            # Save the PM2 process list and corresponding environments
+            pm2 save
