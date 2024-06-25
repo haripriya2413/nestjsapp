@@ -37,6 +37,8 @@ jobs:
             fi
             git fetch origin
             git reset --hard origin/main  # Use the correct branch name
+            sudo npm install -g pm2
+
             
             npm install
             npm run build
